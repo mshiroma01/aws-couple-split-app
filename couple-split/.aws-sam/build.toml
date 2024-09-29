@@ -5,8 +5,26 @@ codeuri = "/home/matthew/projects/aws-couple-split-app/couple-split/lambda/csv_c
 runtime = "python3.11"
 architecture = "x86_64"
 handler = "lambda_function.lambda_handler"
-manifest_hash = ""
+manifest_hash = "6686853da3491a56c98917cc5c4ddea2"
 packagetype = "Zip"
 functions = ["CSVConverterLambda"]
+
+[function_build_definitions.18f3ff8d-ed0c-49bf-a08d-5121984b6e5d]
+codeuri = "/home/matthew/projects/aws-couple-split-app/couple-split/lambda/fetch_pending_transactions"
+runtime = "python3.11"
+architecture = "x86_64"
+handler = "lambda_function.lambda_handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["FetchPendingTransactionsLambda"]
+
+[function_build_definitions.2b811bf1-a4ba-4c0e-93c3-4c7fe0714394]
+codeuri = "/home/matthew/projects/aws-couple-split-app/couple-split/lambda/update_transactions"
+runtime = "python3.11"
+architecture = "x86_64"
+handler = "lambda_function.lambda_handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["UpdateTransactionsLambda"]
 
 [layer_build_definitions]

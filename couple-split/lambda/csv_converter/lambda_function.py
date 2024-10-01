@@ -36,7 +36,7 @@ def lambda_handler(event, context):
             
             mapping_config = None
             for format_name, config in mapping_configs.items():
-                if all(col in header for key, col in config.items() if key != 'name'):
+                if all(col in header for key, col in config.items() if key not in ['name', 'date_format']):
                     mapping_config = config
                     break
                     

@@ -6,25 +6,85 @@ let transactionsPerPage = 10; // Default items per page
 let currentPage = 1;
 let totalItems = 0;
 let totalPages = 0;
-let groupedTransactions = {}; // Store transactions grouped by mapping_config_name
 
-// Fetch pending transactions from the backend API
+let groupedTransactions = {}; // Store transactions grouped by mapping_config_name
+let allTransactions = []; // Store all fetched transactions locally
+
+// Fetch pending transactions with optional date range
 async function fetchTransactions() {
+    // Clear local cache before fetching new data
+    allTransactions = [];
+    groupedTransactions = {};
+    totalItems = 0;
+
+    // Clear the table to show a blank state while fetching new data
+    const tablesContainer = document.getElementById('tablesContainer');
+    tablesContainer.innerHTML = ''; // This will clear the table immediately
+
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    let apiUrlFetchWithDates = apiUrlFetch;
+
+    // Add the date range to the URL as query parameters if they are selected
+    if (startDate && endDate) {
+        const encodedStartDate = encodeURIComponent(startDate);
+        const encodedEndDate = encodeURIComponent(endDate);
+        apiUrlFetchWithDates += `?startDate=${encodedStartDate}&endDate=${encodedEndDate}`;
+    }
+
     try {
-        const response = await fetch(apiUrlFetch);
+        const response = await fetch(apiUrlFetchWithDates);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const transactions = await response.json();
-        totalItems = transactions.length;
-        groupedTransactions = groupByMappingConfig(transactions); // Group transactions
+        
+        // The response is an array of transactions
+        const transactions = await response.json(); // No need to access a specific key
+
+        if (transactions.length === 0) {
+            document.getElementById('tablesContainer').innerHTML = "<p>No transactions available.</p>";
+            return;
+        }
+
+        // Store transactions locally
+        allTransactions = transactions;
+        totalItems = allTransactions.length;
+
+        // Group transactions if necessary and render tables
+        groupedTransactions = groupByMappingConfig(allTransactions);  
         renderTables(groupedTransactions);
-        renderPaginationControls();
+        renderPaginationControls();  
+
     } catch (error) {
         console.error('Error fetching transactions:', error);
-        const tablesContainer = document.getElementById('tablesContainer');
-        tablesContainer.innerHTML = `<p>Error fetching transactions: ${error.message}</p>`;
+        document.getElementById('transactions').innerHTML = `<p>Error fetching transactions: ${error.message}</p>`;
     }
+}
+
+
+// Handle changing the number of items per page
+function changeItemsPerPage() {
+    const select = document.getElementById('itemsPerPageSelect');
+    const customInput = document.getElementById('customItemsPerPage');
+
+    if (select.value === 'custom') {
+        customInput.style.display = 'inline-block'; // Show custom input
+        const customValue = parseInt(customInput.value, 10);
+        if (customValue > 0) {
+            transactionsPerPage = customValue;
+        }
+    } else if (select.value === 'all') {
+        transactionsPerPage = totalItems; // Show all transactions
+        customInput.style.display = 'none'; // Hide custom input
+    } else {
+        transactionsPerPage = parseInt(select.value, 10);
+        customInput.style.display = 'none'; // Hide custom input
+    }
+
+    currentPage = 1; // Reset to the first page
+    renderTables(groupedTransactions); // Reuse the existing groupedTransactions data
+    renderPaginationControls();
 }
 
 // Render tables with pagination
@@ -45,10 +105,11 @@ function renderTables(groupedTransactions) {
         table.innerHTML = `
             <thead>
                 <tr>
+                    <th>#</th> <!-- New column for item count -->
                     <th>Transaction ID</th>
-                    <th>Description</th>
+                    <th>Description</th> <!-- Updated column name from "Name" to "Description" -->
                     <th>Price</th>
-                    <th>After Split Amount</th>
+                    <th>After Split Amount</th> <!-- New column -->
                     <th>Date</th>
                     <th>Split</th>
                 </tr>
@@ -63,16 +124,19 @@ function renderTables(groupedTransactions) {
         const endIndex = startIndex + transactionsPerPage;
         const pagedTransactions = groupedTransactions[mappingConfigName].slice(startIndex, endIndex);
 
-        // Populate table with paged transactions
-        pagedTransactions.forEach(transaction => {
-            const afterSplitAmount = transaction.after_split_amount ? transaction.after_split_amount.toFixed(2) : '-'; // Round to 2 decimals
+        // Populate table with paged transactions and add item count
+        pagedTransactions.forEach((transaction, index) => {
+            const afterSplitAmount = (transaction.after_split_amount !== null && transaction.after_split_amount !== undefined) 
+                ? `$${transaction.after_split_amount.toFixed(2)}` 
+                : '';
 
             const row = document.createElement('tr');
             row.innerHTML = `
+                <td>${startIndex + index + 1}</td> <!-- Item count column -->
                 <td>${transaction.hash}</td>
                 <td>${transaction.description}</td>
                 <td>$${transaction.amount}</td>
-                <td>$${afterSplitAmount}</td> <!-- Display rounded after_split_amount -->
+                <td>${afterSplitAmount}</td> <!-- Display rounded after_split_amount or blank -->
                 <td>${transaction.transaction_date}</td>
                 <td>
                     <select id="split-${transaction.hash}">
@@ -89,6 +153,8 @@ function renderTables(groupedTransactions) {
         tablesContainer.appendChild(tableContainer);
     });
 }
+
+
 
 
 // Helper function to group transactions by mapping_config_name
@@ -114,15 +180,19 @@ function changeItemsPerPage() {
         if (customValue > 0) {
             transactionsPerPage = customValue;
         }
-    } else {
+    } else if (select.value === 'all') {
+        transactionsPerPage = totalItems; // Set to totalItems to show all transactions
         customInput.style.display = 'none'; // Hide custom input
+    } else {
         transactionsPerPage = parseInt(select.value, 10);
+        customInput.style.display = 'none'; // Hide custom input
     }
 
     currentPage = 1; // Reset to the first page
     renderTables(groupedTransactions);
     renderPaginationControls();
 }
+
 
 // Update pagination controls
 function renderPaginationControls() {
@@ -176,7 +246,6 @@ function goToPage(page) {
     }
 }
 
-// Send the reviewed transactions to the backend API
 async function submitChanges() {
     const tablesContainer = document.getElementById('tablesContainer');
     const selects = tablesContainer.querySelectorAll('select');
@@ -186,21 +255,40 @@ async function submitChanges() {
     selects.forEach(select => {
         const transactionId = select.id.split('-')[1]; // Extract transaction ID from select ID
         const splitValue = select.value; // Get the value of the dropdown
-        updates.push({
-            hash: transactionId,
-            split: splitValue === 'yes',
-            status: 'reviewed'
-        });
+
+        // Only push updates if a valid selection was made (either "yes" or "no")
+        if (splitValue === 'yes' || splitValue === 'no') {
+            updates.push({
+                hash: transactionId,
+                split: splitValue,  // This will be either 'yes' or 'no'
+                status: 'reviewed'   // Change status to reviewed
+            });
+        }
     });
+
+    if (updates.length === 0) {
+        alert('No transactions were selected for update.');
+        return;
+    }
 
     // Send the updated transactions to the backend API
-    await fetch(apiUrlUpdate, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updates)
-    });
+    try {
+        const response = await fetch(apiUrlUpdate, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updates)
+        });
 
-    alert('Transactions updated successfully!');
+        if (response.ok) {
+            alert('Transactions updated successfully!');
+        } else {
+            const errorText = await response.text();
+            alert(`Error updating transactions: ${errorText}`);
+        }
+    } catch (error) {
+        console.error('Error submitting changes:', error);
+        alert('Error submitting changes. Please try again later.');
+    }
 }

@@ -4,24 +4,57 @@
     top: 0;
     width: 100%;
     background-color: #f8f9fa;
-    padding: 10px;
+    padding: 15px; /* Increased padding for more space around elements */
     display: flex;
     justify-content: space-between;
+    align-items: center; /* Vertically aligns items */
     z-index: 10;
     border-bottom: 1px solid #ccc;
+    box-sizing: border-box; /* Ensures padding is inside the width */
 }
 
+/* Date range input styles */
+.date-range {
+    display: flex;
+    gap: 10px; /* Space between the date inputs */
+}
+
+.date-range label {
+    margin-right: 5px;
+}
+
+.date-range input[type="date"] {
+    padding: 5px; /* Add padding for more clickable area */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+
+/* Container and table styling */
 .container {
-    margin-top: 60px; /* To account for the fixed buttons */
+    margin-top: 60px;
     padding: 20px;
-    margin-right: 20px; /* Added margin to prevent the scrollbar from cutting off text */
-    overflow-y: auto; /* Ensure vertical scrolling */
+    margin-right: 20px;
+    overflow-y: auto; /* Ensure vertical scrolling is enabled */
+    max-height: 600px; /* Limit the height of the container to activate scrolling */
 }
 
+/* Make the title static and unaffected by scrolling */
+.table-title {
+    position: relative;
+    margin-bottom: 10px;
+    font-size: 1.5em;
+    font-weight: bold;
+    background-color: white;
+    z-index: 2; /* Ensure it stays above the scrollable content */
+}
+
+/* Adjust the table container for scrolling */
 .table-container {
-    margin-bottom: 80px; /* To account for the pagination controls at the bottom */
-    overflow-x: auto; /* Enable horizontal scrolling */
-    margin-right: 20px; /* Added margin to prevent the scrollbar from cutting off text */
+    margin-bottom: 80px;
+    overflow-x: auto;
+    max-height: 600px;
+    margin-right: 20px;
 }
 
 /* Pagination controls */
@@ -29,42 +62,34 @@
     text-align: right;
     position: fixed;
     bottom: 0;
-    width: calc(100% - 20px); /* Adjust width to account for right margin */
+    width: calc(100% - 20px); /* Adjust width to account for margins */
     background-color: white;
-    padding: 10px 20px;
+    padding: 15px; /* Increased padding for more space */
     z-index: 10;
     box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: center; /* Center-align items vertically */
+    border-top: 1px solid #ccc;
+    box-sizing: border-box; /* Ensures padding is within the width */
 }
 
-.pagination select {
-    margin-right: 20px;
-}
-
-.pagination span {
-    margin-right: 20px;
-}
-
-.pagination button,
-.pagination input[type="number"] {
-    margin-left: 10px;
-    padding: 5px 10px;
+/* Ensure enough spacing around dropdown and buttons */
+.pagination select,
+.pagination input[type="number"],
+.pagination button {
+    padding: 5px; /* Increased padding for better clickability */
     border: 1px solid #ccc;
-    background-color: #f2f2f2;
     border-radius: 4px;
+    margin-left: 5px; /* Ensure space between buttons */
 }
 
-.pagination button.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
+/* Adjust input size */
 .pagination input[type="number"] {
     width: 50px;
     text-align: center;
 }
+
 
 /* Table styling */
 table {
@@ -72,7 +97,6 @@ table {
     border-collapse: collapse;
     margin-top: 20px;
     table-layout: fixed;
-    overflow: hidden;
 }
 
 th, td {
@@ -84,17 +108,33 @@ th, td {
     border: 1px solid black;
 }
 
+/* Sticky headers */
 th {
-    background-color: #f2f2f2;
+    position: sticky;
+    top: 0; /* Sticks to the top when scrolling */
+    background-color: #e0e0e0;
+    z-index: 10; /* Ensure header is on top of table rows */
 }
 
-/* Make the first column fixed */
+/* Set width for the item count column */
 th:first-child, td:first-child {
+    width: 50px;
+    text-align: center;
     position: sticky;
     left: 0;
     background-color: #f2f2f2;
-    z-index: 1;
+    z-index: 11; /* Ensure first column is above header cells */
 }
+
+/* Alternating row background color */
+tbody tr:nth-child(odd) {
+    background-color: #f2f2f2;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #ffffff;
+}
+
 
 select {
     width: 100%;

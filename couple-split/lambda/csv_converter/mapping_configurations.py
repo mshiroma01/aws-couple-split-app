@@ -8,7 +8,8 @@ mapping_configs = {
         'category': 'Category',
         'transaction_type': 'Type',
         'amount': 'Amount',
-        'memo': 'Memo'
+        'memo': 'Memo',
+        'date_format': '%m/%d/%Y'
     },
     'discover_credit': {
         'name': 'discover_credit',
@@ -16,7 +17,8 @@ mapping_configs = {
         'post_date': 'Post Date',
         'description': 'Description',
         'amount': 'Amount',
-        'category': 'Category'
+        'category': 'Category',
+        'date_format': '%m/%d/%Y'
     },
     'discover_checking': {
         'name': 'discover_checking',
@@ -25,14 +27,16 @@ mapping_configs = {
         'transaction_type': 'Transaction Type',
         'debit': 'Debit',
         'credit': 'Credit',
-        'balance': 'Balance'
+        'balance': 'Balance',
+        'date_format': '%m/%d/%Y'
     },
     'bofa_checking': {
         'name': 'bofa_checking',
         'transaction_date': 'Date',
         'description': 'Description',
         'amount': 'Amount',
-        'balance': 'Running Bal.'
+        'balance': 'Running Bal.',
+        'date_format': '%m/%d/%Y'
     },
     'bofa_credit': {
         'name': 'bofa_credit',
@@ -40,6 +44,7 @@ mapping_configs = {
         'reference_number': 'Reference Number',
         'payee': 'Payee',
         'address': 'Address',
-        'amount': 'Amount'
+        'amount': 'Amount',
+        'date_format': '%m/%d/%Y'
     }
 }

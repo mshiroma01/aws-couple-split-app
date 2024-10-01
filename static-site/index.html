@@ -4,19 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Couple Split - Review Transactions</title>
+    <!-- Link to the external CSS file -->
+    <link rel="stylesheet" href="PRESIGNED URL">
 </head>
 <body>
-    <h1>Review Transactions</h1>
-
-    <button onclick="fetchTransactions()">Fetch Transactions</button>
-
-    <div id="transactions">
-        <!-- Transactions will be dynamically populated here -->
+    <div class="top-bar">
+        <button onclick="fetchTransactions()">Fetch Transactions</button>
+        <button onclick="submitChanges()">Submit Changes</button>
     </div>
 
-    <button onclick="submitChanges()">Submit Changes</button>
+    <div class="container">
+        <div id="tablesContainer">
+            <!-- Tables will be dynamically populated here -->
+        </div>
+        <div class="pagination" id="paginationControls">
+            <div>
+                <label for="itemsPerPageSelect">Items per page:</label>
+                <select id="itemsPerPageSelect" onchange="changeItemsPerPage()">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="custom">Custom</option>
+                </select>
+                <input type="number" id="customItemsPerPage" style="display:none;" onchange="changeItemsPerPage()" placeholder="Custom" min="1">
+            </div>
+            
+            <div>
+                <span id="itemRange">1-10 of 100 items</span>
+                <button onclick="goToFirstPage()" id="firstPageButton" class="pagination-button" disabled>&laquo;</button>
+                <button onclick="goToPreviousPage()" id="prevPageButton" class="pagination-button" disabled>&lt;</button>
+                <input type="number" id="currentPageInput" value="1" min="1" onchange="goToPage(this.value)">
+                <span id="totalPages">of 10</span>
+                <button onclick="goToNextPage()" id="nextPageButton" class="pagination-button">&gt;</button>
+                <button onclick="goToLastPage()" id="lastPageButton" class="pagination-button">&raquo;</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Link to external JavaScript file -->
-    <script src="<INSERT scripts.js presign url>"></script>
+    <script src="PRESIGNED URL"></script>
+
 </body>
 </html>

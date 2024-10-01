@@ -1,0 +1,101 @@
+/* Top bar and container styling */
+.top-bar {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: #f8f9fa;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    z-index: 10;
+    border-bottom: 1px solid #ccc;
+}
+
+.container {
+    margin-top: 60px; /* To account for the fixed buttons */
+    padding: 20px;
+    margin-right: 20px; /* Added margin to prevent the scrollbar from cutting off text */
+    overflow-y: auto; /* Ensure vertical scrolling */
+}
+
+.table-container {
+    margin-bottom: 80px; /* To account for the pagination controls at the bottom */
+    overflow-x: auto; /* Enable horizontal scrolling */
+    margin-right: 20px; /* Added margin to prevent the scrollbar from cutting off text */
+}
+
+/* Pagination controls */
+.pagination {
+    text-align: right;
+    position: fixed;
+    bottom: 0;
+    width: calc(100% - 20px); /* Adjust width to account for right margin */
+    background-color: white;
+    padding: 10px 20px;
+    z-index: 10;
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pagination select {
+    margin-right: 20px;
+}
+
+.pagination span {
+    margin-right: 20px;
+}
+
+.pagination button,
+.pagination input[type="number"] {
+    margin-left: 10px;
+    padding: 5px 10px;
+    border: 1px solid #ccc;
+    background-color: #f2f2f2;
+    border-radius: 4px;
+}
+
+.pagination button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination input[type="number"] {
+    width: 50px;
+    text-align: center;
+}
+
+/* Table styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    table-layout: fixed;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 1px solid black;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+/* Make the first column fixed */
+th:first-child, td:first-child {
+    position: sticky;
+    left: 0;
+    background-color: #f2f2f2;
+    z-index: 1;
+}
+
+select {
+    width: 100%;
+}

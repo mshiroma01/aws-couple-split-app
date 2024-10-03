@@ -10,7 +10,14 @@ let totalPages = 0;
 let groupedTransactions = {}; // Store transactions grouped by mapping_config_name
 let allTransactions = []; // Store all fetched transactions locally
 
-// Fetch pending transactions with optional date range
+// Enable the Fetch button only when a status is selected
+function toggleFetchButton() {
+    const transactionStatus = document.getElementById('transactionStatus').value;
+    const fetchButton = document.getElementById('fetchButton');
+    fetchButton.disabled = !transactionStatus;  // Enable the button if a valid status is selected
+}
+
+// Fetch transactions with optional date range and status
 async function fetchTransactions() {
     // Clear local cache before fetching new data
     allTransactions = [];
@@ -23,18 +30,22 @@ async function fetchTransactions() {
 
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
+    const status = document.getElementById('transactionStatus').value; // Get selected status
 
-    let apiUrlFetchWithDates = apiUrlFetch;
+    let apiUrlFetchWithParams = `${apiUrlFetch}?status=${encodeURIComponent(status)}`;
 
     // Add the date range to the URL as query parameters if they are selected
-    if (startDate && endDate) {
+    if (startDate) {
         const encodedStartDate = encodeURIComponent(startDate);
+        apiUrlFetchWithParams += `&startDate=${encodedStartDate}`;
+    }
+    if (endDate) {
         const encodedEndDate = encodeURIComponent(endDate);
-        apiUrlFetchWithDates += `?startDate=${encodedStartDate}&endDate=${encodedEndDate}`;
+        apiUrlFetchWithParams += `&endDate=${encodedEndDate}`;
     }
 
     try {
-        const response = await fetch(apiUrlFetchWithDates);
+        const response = await fetch(apiUrlFetchWithParams);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -246,6 +257,7 @@ function goToPage(page) {
     }
 }
 
+// Send the updated transactions to the backend API
 async function submitChanges() {
     const tablesContainer = document.getElementById('tablesContainer');
     const selects = tablesContainer.querySelectorAll('select');
@@ -271,6 +283,8 @@ async function submitChanges() {
         return;
     }
 
+    console.log('Submitting updates:', updates); // Log updates to make sure the payload is correct
+
     // Send the updated transactions to the backend API
     try {
         const response = await fetch(apiUrlUpdate, {
@@ -281,10 +295,14 @@ async function submitChanges() {
             body: JSON.stringify(updates)
         });
 
+        // Log response headers for debugging CORS issues
+        console.log('Response headers:', response.headers);
+
         if (response.ok) {
             alert('Transactions updated successfully!');
         } else {
             const errorText = await response.text();
+            console.error('Error response from backend:', errorText);
             alert(`Error updating transactions: ${errorText}`);
         }
     } catch (error) {
@@ -292,3 +310,4 @@ async function submitChanges() {
         alert('Error submitting changes. Please try again later.');
     }
 }
+

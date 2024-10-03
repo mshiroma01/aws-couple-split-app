@@ -88,20 +88,20 @@ Resources:
                   - Name: prefix
                     Value: input_csv/
 
-  FetchPendingTransactionsLambda:
+  FetchTransactionsLambda:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: lambda/fetch_pending_transactions/
+      CodeUri: lambda/fetch_transactions/
       Handler: lambda_function.lambda_handler
       Runtime: python3.11
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref ExistingTransactionSplitTable
       Events:
-        FetchPendingApi:
+        FetchApi:
           Type: Api
           Properties:
-            Path: /fetch-pending
+            Path: /fetch-transactions
             Method: get
             Auth:
               AuthorizationType: AWS_IAM
@@ -177,9 +177,9 @@ Outputs:
     Description: CSV Converter Lambda Function ARN
     Value: !GetAtt CSVConverterLambda.Arn
 
-  FetchPendingTransactionsApiEndpoint:
-    Description: API Gateway endpoint URL for FetchPendingTransactions
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/fetch-pending"
+  FetchTransactionsApiEndpoint:
+    Description: API Gateway endpoint URL for FetchTransactions
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/fetch-transactions"
 
   UpdateTransactionsApiEndpoint:
     Description: API Gateway endpoint URL for UpdateTransactions

@@ -13,6 +13,18 @@ def lambda_handler(event, context):
     try:
         logger.info("Received event: %s", json.dumps(event))
 
+        # Handle preflight CORS (OPTIONS request)
+        if event['httpMethod'] == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                },
+                'body': json.dumps('CORS preflight')
+            }
+
         # Check if body exists in the event
         if event.get('body') is None:
             raise ValueError("Request body is missing")
@@ -50,15 +62,13 @@ def lambda_handler(event, context):
                         ':status': status
                     }
                 )
-            else:
-                logger.warning(f"Invalid split value for transaction {transaction_hash}: {split_value}")
 
         return {
             'statusCode': 200,
             'headers': {
-                'Access-Control-Allow-Origin': '*',  # Allow cross-origin requests if needed
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Methods': 'POST,OPTIONS'
+                'Access-Control-Allow-Methods': 'POST, OPTIONS'
             },
             'body': json.dumps('Transactions updated successfully')
         }
@@ -68,9 +78,9 @@ def lambda_handler(event, context):
         return {
             'statusCode': 400,
             'headers': {
-                'Access-Control-Allow-Origin': '*',  # Ensure CORS headers are included on error
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Methods': 'POST,OPTIONS'
+                'Access-Control-Allow-Methods': 'POST, OPTIONS'
             },
             'body': json.dumps(f"Error: {str(ve)}")
         }
@@ -79,9 +89,9 @@ def lambda_handler(event, context):
         return {
             'statusCode': 500,
             'headers': {
-                'Access-Control-Allow-Origin': '*',  # Ensure CORS headers are included on error
+                'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Methods': 'POST,OPTIONS'
+                'Access-Control-Allow-Methods': 'POST, OPTIONS'
             },
             'body': json.dumps(f"Error updating transactions: {str(e)}")
         }

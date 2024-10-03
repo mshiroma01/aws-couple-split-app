@@ -9,8 +9,16 @@
 </head>
 <body>
     <div class="top-bar">
-        <button onclick="fetchTransactions()">Fetch Transactions</button>
+        <label for="transactionStatus">Transaction Status: </label>
+        <select id="transactionStatus" onchange="toggleFetchButton()">
+            <option value="" disabled selected>-- Select Status --</option>
+            <option value="pending">Pending</option>
+            <option value="reviewed">Reviewed</option>
+        </select>
+
+        <button id="fetchButton" onclick="fetchTransactions()" disabled>Fetch Transactions</button>
         <button onclick="submitChanges()">Submit Changes</button>
+
         <div class="date-range">
             <label for="startDate">Start Date: </label>
             <input type="date" id="startDate" />
@@ -18,7 +26,6 @@
             <input type="date" id="endDate" />
         </div>
     </div>
-    
 
     <div class="container">
         <div id="tablesContainer">

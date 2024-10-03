@@ -4,19 +4,21 @@
     top: 0;
     width: 100%;
     background-color: #f8f9fa;
-    padding: 15px; /* Increased padding for more space around elements */
+    padding: 15px; /* Keep padding for more space around elements */
     display: flex;
     justify-content: space-between;
     align-items: center; /* Vertically aligns items */
     z-index: 10;
     border-bottom: 1px solid #ccc;
     box-sizing: border-box; /* Ensures padding is inside the width */
+    gap: 10px; /* Add gap for better spacing */
 }
 
 /* Date range input styles */
 .date-range {
     display: flex;
     gap: 10px; /* Space between the date inputs */
+    align-items: center;
 }
 
 .date-range label {
@@ -29,8 +31,21 @@
     border-radius: 4px;
 }
 
+/* Adjust the dropdown and button */
+.top-bar select {
+    width: auto; /* Allow dropdown to fit its content */
+    padding: 5px; /* Adjust padding for consistency */
+    font-size: 14px;
+    max-width: 200px; /* Set a max-width to prevent it from getting too large */
+}
 
-/* Container and table styling */
+.top-bar button {
+    padding: 8px 12px; /* Adjust button padding for consistency */
+    font-size: 14px;
+    margin-left: 10px; /* Ensure space between the button and dropdown */
+}
+
+/* Ensure the container stays as is */
 .container {
     margin-top: 60px;
     padding: 20px;
@@ -39,7 +54,7 @@
     max-height: 600px; /* Limit the height of the container to activate scrolling */
 }
 
-/* Make the title static and unaffected by scrolling */
+/* Keep the table title static and styled */
 .table-title {
     position: relative;
     margin-bottom: 10px;
@@ -90,7 +105,6 @@
     text-align: center;
 }
 
-
 /* Table styling */
 table {
     width: 100%;
@@ -135,7 +149,8 @@ tbody tr:nth-child(even) {
     background-color: #ffffff;
 }
 
-
+/* Select dropdown width adjustment */
 select {
-    width: 100%;
+    width: auto; /* Fit content instead of taking up full width */
+    max-width: 150px; /* Set a max width for consistency */
 }

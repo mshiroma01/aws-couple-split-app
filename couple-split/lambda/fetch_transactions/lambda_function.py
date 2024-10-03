@@ -2,7 +2,7 @@ import json
 import boto3
 import decimal
 import logging
-from boto3.dynamodb.conditions import Attr
+from boto3.dynamodb.conditions import Attr, And
 
 dynamodb = boto3.resource('dynamodb')
 
@@ -39,21 +39,32 @@ def lambda_handler(event, context):
         logger.info("No query string parameters provided.")
         start_date = None
         end_date = None
+        status = 'pending'  # Default to pending if no status is provided
+        userid = None
     else:
         query_params = event['queryStringParameters']
         logger.info(f"Query parameters: {query_params}")
         start_date = query_params.get('startDate')
         end_date = query_params.get('endDate')
+        status = query_params.get('status', 'pending')  # Default to pending if no status is provided
+        userid = query_params.get('userid')  # Get the userid from the query
 
-    logger.info(f"Start date: {start_date}, End date: {end_date}")  # Log date parameters
+    logger.info(f"Start date: {start_date}, End date: {end_date}, Status: {status}, UserID: {userid}")  # Log the parameters
 
-    # Base filter expression for pending transactions
-    filter_expression = Attr('status').eq('pending')
+    # Build the base filter expression based on status
+    filter_expression = Attr('status').eq(status)
+    
+    # Add the user-specific filter if userid is provided
+    if userid:
+        filter_expression = filter_expression & Attr('userid').eq(userid)
 
-    # Add date range filtering if both startDate and endDate are provided
-    if start_date and end_date:
-        filter_expression = filter_expression & Attr('transaction_date').gte(start_date) & Attr('transaction_date').lte(end_date)
-        logger.info(f"Filter expression with dates: {filter_expression}")
+    # Add date range filtering if startDate and/or endDate are provided
+    if start_date:
+        filter_expression = filter_expression & Attr('transaction_date').gte(start_date)
+    if end_date:
+        filter_expression = filter_expression & Attr('transaction_date').lte(end_date)
+
+    logger.info(f"Filter expression: {filter_expression}")
 
     # Handle the GET request logic
     try:

@@ -10,14 +10,16 @@ let totalPages = 0;
 let groupedTransactions = {}; // Store transactions grouped by mapping_config_name
 let allTransactions = []; // Store all fetched transactions locally
 
+let splitCategories = {}; // Store fetched split categories locally
+
 // Enable the Fetch button only when a status is selected
 function toggleFetchButton() {
-    const transactionStatus = document.getElementById('transactionStatus').value;
+    const statusSelect = document.getElementById('statusSelect').value;
     const fetchButton = document.getElementById('fetchButton');
-    fetchButton.disabled = !transactionStatus;  // Enable the button if a valid status is selected
+    fetchButton.disabled = !statusSelect;  // Enable the button if a valid status is selected
 }
 
-// Fetch transactions with optional date range and status
+// Fetch pending or reviewed transactions with optional date range
 async function fetchTransactions() {
     // Clear local cache before fetching new data
     allTransactions = [];
@@ -27,31 +29,52 @@ async function fetchTransactions() {
     // Clear the table to show a blank state while fetching new data
     const tablesContainer = document.getElementById('tablesContainer');
     tablesContainer.innerHTML = ''; // This will clear the table immediately
+    
+    // Ensure the elements exist before accessing their values
+    const statusSelect = document.getElementById('statusSelect');
+    const userIdInput = '123456789';
+    // const userIdInput = document.getElementById('userId');
+
+    if (!statusSelect || !userIdInput) {
+        console.error('Required elements (statusSelect, userId) are missing.');
+        return;
+    }
+
+    const status = statusSelect.value;  // Status selection
+    const userid = '123456789';   // User ID
+    // const userid = userIdInput.value;   // User ID
+
+    if (!userid) {
+        alert('User ID is required.');
+        return;
+    }
 
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
-    const status = document.getElementById('transactionStatus').value; // Get selected status
 
-    let apiUrlFetchWithParams = `${apiUrlFetch}?status=${encodeURIComponent(status)}`;
+    let apiUrlFetchWithParams = `${apiUrlFetch}?status=${encodeURIComponent(status)}&userid=${encodeURIComponent(userid)}`;
+    
+    if (startDate) apiUrlFetchWithParams += `&startDate=${encodeURIComponent(startDate)}`;
+    if (endDate) apiUrlFetchWithParams += `&endDate=${encodeURIComponent(endDate)}`;
 
-    // Add the date range to the URL as query parameters if they are selected
-    if (startDate) {
-        const encodedStartDate = encodeURIComponent(startDate);
-        apiUrlFetchWithParams += `&startDate=${encodedStartDate}`;
-    }
-    if (endDate) {
-        const encodedEndDate = encodeURIComponent(endDate);
-        apiUrlFetchWithParams += `&endDate=${encodedEndDate}`;
-    }
+    // Get Cognito access token
+    const token = localStorage.getItem('accessToken');  // Ensure the token is stored here after login
 
+    // Add the actual fetch call here
     try {
-        const response = await fetch(apiUrlFetchWithParams);
+        const response = await fetch(apiUrlFetchWithParams, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,  // Add Cognito token here
+                'Content-Type': 'application/json'
+            }
+        });
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        
-        // The response is an array of transactions
-        const transactions = await response.json(); // No need to access a specific key
+
+        const transactions = await response.json();
 
         if (transactions.length === 0) {
             document.getElementById('tablesContainer').innerHTML = "<p>No transactions available.</p>";
@@ -69,7 +92,7 @@ async function fetchTransactions() {
 
     } catch (error) {
         console.error('Error fetching transactions:', error);
-        document.getElementById('transactions').innerHTML = `<p>Error fetching transactions: ${error.message}</p>`;
+        document.getElementById('tablesContainer').innerHTML = `<p>Error fetching transactions: ${error.message}</p>`;
     }
 }
 
@@ -98,8 +121,38 @@ function changeItemsPerPage() {
     renderPaginationControls();
 }
 
-// Render tables with pagination
-function renderTables(groupedTransactions) {
+// Fetch categories before rendering tables
+async function fetchCategories() {
+    const apiUrlCategories = 'https://cg6071uo5i.execute-api.us-east-1.amazonaws.com/Prod/fetch-categories'; 
+
+    try {
+        const response = await fetch(`${apiUrlCategories}?userid=123456789`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch categories: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;  // Assume the data returned is an array of categories
+    } catch (error) {
+        console.error('Error fetching categories:', error);
+        return [];
+    }
+}
+
+
+// Render tables with category selection dropdown for missing categories
+async function renderTables(groupedTransactions) {
+    // Fetch the categories and ensure it's an array
+    splitCategories = await fetchCategories();
+    if (!Array.isArray(splitCategories)) {
+        console.error('splitCategories is not an array:', splitCategories);
+        splitCategories = [];  // Default to an empty array if fetch fails
+    }
+
     const tablesContainer = document.getElementById('tablesContainer');
     tablesContainer.innerHTML = ''; // Clear existing tables
 
@@ -116,12 +169,13 @@ function renderTables(groupedTransactions) {
         table.innerHTML = `
             <thead>
                 <tr>
-                    <th>#</th> <!-- New column for item count -->
+                    <th>#</th> 
                     <th>Transaction ID</th>
-                    <th>Description</th> <!-- Updated column name from "Name" to "Description" -->
+                    <th>Description</th> 
                     <th>Price</th>
-                    <th>After Split Amount</th> <!-- New column -->
+                    <th>After Split Amount</th> 
                     <th>Date</th>
+                    <th>Category</th> <!-- New Category Column -->
                     <th>Split</th>
                 </tr>
             </thead>
@@ -147,8 +201,9 @@ function renderTables(groupedTransactions) {
                 <td>${transaction.hash}</td>
                 <td>${transaction.description}</td>
                 <td>$${transaction.amount}</td>
-                <td>${afterSplitAmount}</td> <!-- Display rounded after_split_amount or blank -->
+                <td>${afterSplitAmount}</td>
                 <td>${transaction.transaction_date}</td>
+                <td id="category-cell-${transaction.hash}"></td> <!-- Placeholder for category -->
                 <td>
                     <select id="split-${transaction.hash}">
                         <option value="" disabled selected>-- Select --</option> <!-- Default option -->
@@ -157,6 +212,24 @@ function renderTables(groupedTransactions) {
                     </select>
                 </td>
             `;
+
+            // Category selection
+            const categoryCell = row.querySelector(`#category-cell-${transaction.hash}`);
+            if (!transaction.category) {
+                const categorySelect = document.createElement('select');
+                categorySelect.id = `category-${transaction.hash}`;
+                categorySelect.innerHTML = '<option value="" disabled selected>-- Select Category --</option>';
+                splitCategories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.category;
+                    option.textContent = category.category;
+                    categorySelect.appendChild(option);
+                });
+                categoryCell.appendChild(categorySelect);
+            } else {
+                categoryCell.textContent = transaction.category; // If a category exists, show it as text
+            }
+
             tableBody.appendChild(row);
         });
 
@@ -164,9 +237,6 @@ function renderTables(groupedTransactions) {
         tablesContainer.appendChild(tableContainer);
     });
 }
-
-
-
 
 // Helper function to group transactions by mapping_config_name
 function groupByMappingConfig(transactions) {
@@ -257,7 +327,6 @@ function goToPage(page) {
     }
 }
 
-// Send the updated transactions to the backend API
 async function submitChanges() {
     const tablesContainer = document.getElementById('tablesContainer');
     const selects = tablesContainer.querySelectorAll('select');
@@ -266,14 +335,28 @@ async function submitChanges() {
 
     selects.forEach(select => {
         const transactionId = select.id.split('-')[1]; // Extract transaction ID from select ID
-        const splitValue = select.value; // Get the value of the dropdown
+        const splitValue = select.value; // Get the value of the split dropdown
 
-        // Only push updates if a valid selection was made (either "yes" or "no")
-        if (splitValue === 'yes' || splitValue === 'no') {
+        // Get the selected category from the category dropdown if it exists
+        const categorySelect = document.getElementById(`category-${transactionId}`);
+        const selectedCategory = categorySelect ? categorySelect.value : null;
+
+        // Find the matching transaction in `allTransactions` to get the amount
+        const transaction = allTransactions.find(t => t.hash === transactionId);
+        const amount = transaction ? transaction.amount : null;  // Get the transaction amount
+
+        // Get UserID from a global variable, hardcoded value, or another source
+        const userid = '123456789'; // Hardcoded for now; replace with actual logic
+
+        // Only push updates if a valid selection was made for split or category
+        if ((splitValue === 'yes' || splitValue === 'no') || selectedCategory) {
             updates.push({
                 hash: transactionId,
                 split: splitValue,  // This will be either 'yes' or 'no'
-                status: 'reviewed'   // Change status to reviewed
+                category: selectedCategory,  // Include category if updated
+                status: 'reviewed',   // Change status to reviewed
+                userid: userid,       // Pass the user ID
+                amount: amount        // Pass the transaction amount
             });
         }
     });
@@ -283,26 +366,24 @@ async function submitChanges() {
         return;
     }
 
-    console.log('Submitting updates:', updates); // Log updates to make sure the payload is correct
+    // Get Cognito access token
+    const token = localStorage.getItem('accessToken');  // Ensure the token is stored here after login
 
     // Send the updated transactions to the backend API
     try {
         const response = await fetch(apiUrlUpdate, {
             method: 'POST',
             headers: {
+                'Authorization': `Bearer ${token}`,  // Add Cognito token here
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(updates)
         });
 
-        // Log response headers for debugging CORS issues
-        console.log('Response headers:', response.headers);
-
         if (response.ok) {
             alert('Transactions updated successfully!');
         } else {
             const errorText = await response.text();
-            console.error('Error response from backend:', errorText);
             alert(`Error updating transactions: ${errorText}`);
         }
     } catch (error) {
@@ -310,4 +391,3 @@ async function submitChanges() {
         alert('Error submitting changes. Please try again later.');
     }
 }
-

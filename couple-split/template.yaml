@@ -115,6 +115,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref ExistingTransactionSplitTable
+        - DynamoDBReadPolicy:
+            TableName: !Ref ExistingSplitTable
       Events:
         UpdateTransactionsApi:
           Type: Api
@@ -123,6 +125,24 @@ Resources:
             Method: post
             Auth:
               AuthorizationType: AWS_IAM
+
+  # Lambda Function for Fetching Categories
+  FetchCategoriesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/fetch_categories/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.11
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ExistingSplitTable
+      Events:
+        FetchCategoriesAPI:
+          Type: Api
+          Properties:
+            Path: /fetch-categories
+            Method: get
+            
 
 # Uncommented DynamoDB Table Resources (they already exist, so commented out)
 #
@@ -184,6 +204,11 @@ Outputs:
   UpdateTransactionsApiEndpoint:
     Description: API Gateway endpoint URL for UpdateTransactions
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/update-transactions"
+
+  FetchCategoriesApi:
+    Description: "API Gateway URL for Fetching Categories"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/fetch-categories"
+
 
   Bucket:
     Description: S3 Bucket

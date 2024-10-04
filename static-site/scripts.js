@@ -21,51 +21,30 @@ function toggleFetchButton() {
 
 // Fetch pending or reviewed transactions with optional date range
 async function fetchTransactions() {
-    // Clear local cache before fetching new data
-    allTransactions = [];
-    groupedTransactions = {};
-    totalItems = 0;
-
-    // Clear the table to show a blank state while fetching new data
-    const tablesContainer = document.getElementById('tablesContainer');
-    tablesContainer.innerHTML = ''; // This will clear the table immediately
-    
-    // Ensure the elements exist before accessing their values
     const statusSelect = document.getElementById('statusSelect');
-    const userIdInput = '123456789';
-    // const userIdInput = document.getElementById('userId');
+    const userId = localStorage.getItem('userId');  // Get User ID from localStorage
 
-    if (!statusSelect || !userIdInput) {
-        console.error('Required elements (statusSelect, userId) are missing.');
+    if (!userId) {
+        alert("User ID not found. Please log in first.");
+        window.location.href = 'PRESIGNED URL'; // Redirect to login page if User ID is not found
         return;
     }
 
-    const status = statusSelect.value;  // Status selection
-    const userid = '123456789';   // User ID
-    // const userid = userIdInput.value;   // User ID
-
-    if (!userid) {
-        alert('User ID is required.');
-        return;
-    }
+    const status = statusSelect.value;
 
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
 
-    let apiUrlFetchWithParams = `${apiUrlFetch}?status=${encodeURIComponent(status)}&userid=${encodeURIComponent(userid)}`;
+    let apiUrlFetchWithParams = `${apiUrlFetch}?status=${encodeURIComponent(status)}&userid=${encodeURIComponent(userId)}`;
     
     if (startDate) apiUrlFetchWithParams += `&startDate=${encodeURIComponent(startDate)}`;
     if (endDate) apiUrlFetchWithParams += `&endDate=${encodeURIComponent(endDate)}`;
-
-    // Get Cognito access token
-    const token = localStorage.getItem('accessToken');  // Ensure the token is stored here after login
 
     // Add the actual fetch call here
     try {
         const response = await fetch(apiUrlFetchWithParams, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${token}`,  // Add Cognito token here
                 'Content-Type': 'application/json'
             }
         });
@@ -81,12 +60,10 @@ async function fetchTransactions() {
             return;
         }
 
-        // Store transactions locally
         allTransactions = transactions;
         totalItems = allTransactions.length;
 
-        // Group transactions if necessary and render tables
-        groupedTransactions = groupByMappingConfig(allTransactions);  
+        groupedTransactions = groupByMappingConfig(allTransactions);
         renderTables(groupedTransactions);
         renderPaginationControls();  
 
@@ -95,6 +72,7 @@ async function fetchTransactions() {
         document.getElementById('tablesContainer').innerHTML = `<p>Error fetching transactions: ${error.message}</p>`;
     }
 }
+
 
 
 // Handle changing the number of items per page
@@ -123,7 +101,7 @@ function changeItemsPerPage() {
 
 // Fetch categories before rendering tables
 async function fetchCategories() {
-    const apiUrlCategories = 'https://cg6071uo5i.execute-api.us-east-1.amazonaws.com/Prod/fetch-categories'; 
+    const apiUrlCategories = 'PRESIGNED URL'; 
 
     try {
         const response = await fetch(`${apiUrlCategories}?userid=123456789`, {

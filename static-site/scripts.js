@@ -26,7 +26,7 @@ async function fetchTransactions() {
 
     if (!userId) {
         alert("User ID not found. Please log in first.");
-        window.location.href = 'PRESIGNED URL'; // Redirect to login page if User ID is not found
+        window.location.href = 'APIKEY'; // Redirect to login page if User ID is not found
         return;
     }
 
@@ -101,7 +101,7 @@ function changeItemsPerPage() {
 
 // Fetch categories before rendering tables
 async function fetchCategories() {
-    const apiUrlCategories = 'PRESIGNED URL'; 
+    const apiUrlCategories = 'APIKEY'; 
 
     try {
         const response = await fetch(`${apiUrlCategories}?userid=123456789`, {
@@ -368,4 +368,8 @@ async function submitChanges() {
         console.error('Error submitting changes:', error);
         alert('Error submitting changes. Please try again later.');
     }
+}
+
+function goToDashboard() {
+    window.location.href = 'PRESIGNED URL'; 
 }

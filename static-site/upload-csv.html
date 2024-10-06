@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload CSV - Couple Split App</title>
+    <link rel="stylesheet" href="PRESIGNED URL">
+</head>
+<body>
+
+    <div class="top-bar">
+        <h1>Upload CSV</h1>
+        <button class="home-button" onclick="goToDashboard()">Home</button>
+    </div>
+
+    <div class="container">
+        <!-- Section for Uploading New CSV -->
+        <div class="section">
+            <h2>Upload New CSV</h2>
+            <input type="file" id="csvFile" accept=".csv">
+            <button onclick="uploadCSV()">Upload</button>
+            <p id="uploadStatus"></p>
+        </div>
+
+        <!-- Section for Viewing Previously Uploaded CSV -->
+        <div class="section">
+            <h2>Previously Uploaded CSVs</h2>
+            <div id="fileList">
+                <!-- List of files will be dynamically loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Upload CSV function
+        async function uploadCSV() {
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                document.getElementById('uploadStatus').textContent = "Please select a file first.";
+                return;
+            }
+
+            const user_id = localStorage.getItem('userId');
+            if (!user_id) {
+                alert("User ID not found. Please log in.");
+                return;
+            }
+
+            const fileName = file.name;
+            const reader = new FileReader();
+
+            reader.onload = async function(event) {
+                const fileContent = event.target.result;  // File content to be sent in the body
+
+                const payload = {
+                    file_name: fileName,
+                    user_id: user_id,
+                    file_content: fileContent  // Base64 or raw binary data depending on setup
+                };
+
+                const uploadUrl = 'PRESIGNED URL';  // Lambda API Gateway URL
+
+                try {
+                    const response = await fetch(uploadUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (response.ok) {
+                        document.getElementById('uploadStatus').textContent = `File uploaded successfully!`;
+                        loadUploadedFiles();  // Reload the file list after successful upload
+                    } else {
+                        document.getElementById('uploadStatus').textContent = "Upload failed.";
+                    }
+                } catch (error) {
+                    console.error("Error uploading file:", error);
+                    document.getElementById('uploadStatus').textContent = "An error occurred while uploading.";
+                }
+            };
+
+            reader.readAsText(file);  // Read the file content (adjust as needed)
+        }
+
+        // Function to load and display previously uploaded CSV files
+        async function loadUploadedFiles() {
+            const apiUrl = ''; // API endpoint for fetching file list from the old_csv bucket
+
+            try {
+                const response = await fetch(apiUrl);
+                const files = await response.json();
+
+                const fileList = document.getElementById('fileList');
+                fileList.innerHTML = ''; // Clear the file list
+
+                files.forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.textContent = file;
+                    fileList.appendChild(fileItem);
+                });
+            } catch (error) {
+                console.error("Error loading file list:", error);
+            }
+        }
+
+        // On page load, fetch the uploaded files
+        window.onload = loadUploadedFiles;
+
+        // Temporary function to navigate to the dashboard
+        function goToDashboard() {
+            window.location.href = 'PRESIGNED URL'; 
+        }
+    </script>
+</body>
+</html>

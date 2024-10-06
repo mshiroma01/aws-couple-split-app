@@ -142,7 +142,29 @@ Resources:
           Properties:
             Path: /fetch-categories
             Method: get
-            
+            Auth:
+              AuthorizationType: AWS_IAM
+
+  ProcessCSVUploadFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/process_csv_upload/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.11
+      Policies:
+        - Statement:
+            Effect: Allow
+            Action:
+              - s3:PutObject
+            Resource: arn:aws:s3:::couple-split-app-project/input_csv/*
+      Events:
+        ProcessCsvUploadAPI:
+          Type: Api
+          Properties:
+            Path: /upload-csv
+            Method: post
+            Auth:
+              AuthorizationType: AWS_IAM
 
 # Uncommented DynamoDB Table Resources (they already exist, so commented out)
 #
@@ -209,6 +231,9 @@ Outputs:
     Description: "API Gateway URL for Fetching Categories"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/fetch-categories"
 
+  ProcessCsvUploadApiEndpoint:
+    Description: API Gateway endpoint URL for processing CSV uploads
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/upload-csv"
 
   Bucket:
     Description: S3 Bucket

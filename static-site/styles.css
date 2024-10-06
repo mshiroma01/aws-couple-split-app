@@ -1,156 +1,268 @@
-/* Top bar and container styling */
+/* General body styling for all pages */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #0a2b3b41; /* Dark background for dark mode */
+    margin: 0;
+    padding: 0;
+    color: #ecf0f1; /* Light text for contrast */
+}
+
+.home-button {
+    background-color: #3498db; /* Soft blue */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 1rem;
+    margin-right: 10px; /* Add some space from the next element */
+}
+
+.home-button:hover {
+    background-color: #2980b9; /* Slightly darker blue */
+}
+
+/* Adjust layout for review transaction buttons */
+.review-actions {
+    display: flex;
+    gap: 10px; /* Close the spacing between buttons */
+    align-items: center; /* Align items vertically */
+}
+
+.review-actions select,
+.review-actions button {
+    padding: 8px 12px; /* Consistent padding */
+    font-size: 14px;
+    border-radius: 4px;
+    border: 1px solid #7f8c8d; /* Softer border color for dark mode */
+}
+
+.review-actions button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+}
+
+.review-actions button:hover {
+    background-color: #2980b9;
+}
+
+/* Top bar styling */
 .top-bar {
+    background-color: #1c2833; /* Darker shade for the top bar */
+    color: white;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #7f8c8d;
     position: fixed;
     top: 0;
     width: 100%;
-    background-color: #f8f9fa;
-    padding: 15px; /* Keep padding for more space around elements */
+    z-index: 10;
+    box-sizing: border-box;
+}
+
+/* Control Bar */
+.control-bar {
+    background-color: #34495e; /* Darker shade for control bar */
+    padding: 15px;
     display: flex;
     justify-content: space-between;
-    align-items: center; /* Vertically aligns items */
-    z-index: 10;
-    border-bottom: 1px solid #ccc;
-    box-sizing: border-box; /* Ensures padding is inside the width */
-    gap: 10px; /* Add gap for better spacing */
-}
-
-/* Date range input styles */
-.date-range {
-    display: flex;
-    gap: 10px; /* Space between the date inputs */
     align-items: center;
+    border-bottom: 1px solid #7f8c8d;
+    margin-top: 60px; /* Ensure it sits below the top bar */
+    z-index: 5;
+    padding-top: 40px;
 }
 
-.date-range label {
-    margin-right: 5px;
-}
-
-.date-range input[type="date"] {
-    padding: 5px; /* Add padding for more clickable area */
-    border: 1px solid #ccc;
+.control-bar select,
+.control-bar input,
+.control-bar button {
+    padding: 10px; /* Ensure consistent padding for controls */
     border-radius: 4px;
+    font-size: 1rem;
+    border: 1px solid #7f8c8d;
+    background-color: #2c3e50;
+    color: #ecf0f1;
 }
 
-/* Adjust the dropdown and button */
-.top-bar select {
-    width: auto; /* Allow dropdown to fit its content */
-    padding: 5px; /* Adjust padding for consistency */
-    font-size: 14px;
-    max-width: 200px; /* Set a max-width to prevent it from getting too large */
+.control-bar button {
+    background-color: #3498db;
+    color: white;
+    cursor: pointer;
 }
 
-.top-bar button {
-    padding: 8px 12px; /* Adjust button padding for consistency */
-    font-size: 14px;
-    margin-left: 10px; /* Ensure space between the button and dropdown */
+.control-bar button:hover {
+    background-color: #2980b9;
 }
 
-/* Ensure the container stays as is */
+/* Headings and text */
+h1, h2 {
+    margin: 0;
+    padding: 10px 0;
+    color: #ecf0f1; /* Light grey text for better readability */
+}
+
+/* General container */
 .container {
-    margin-top: 60px;
+    padding: 20px 20px 20px 20px;
+    margin: 0 auto;
+    color: #ecf0f1; /* Light grey text inside the container */
+}
+
+/* Section styling for blocks on the page */
+.section {
+    background-color: #34495e; /* Darker background for sections */
     padding: 20px;
-    margin-right: 20px;
-    overflow-y: auto; /* Ensure vertical scrolling is enabled */
-    max-height: 600px; /* Limit the height of the container to activate scrolling */
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Softer shadow for depth */
 }
 
-/* Keep the table title static and styled */
-.table-title {
-    position: relative;
-    margin-bottom: 10px;
-    font-size: 1.5em;
-    font-weight: bold;
-    background-color: white;
-    z-index: 2; /* Ensure it stays above the scrollable content */
+/* Button styles */
+button {
+    background-color: #3498db; /* Softer blue */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 1rem;
 }
 
-/* Adjust the table container for scrolling */
-.table-container {
-    margin-bottom: 80px;
-    overflow-x: auto;
-    max-height: 600px;
-    margin-right: 20px;
+button:hover {
+    background-color: #2980b9; /* Slightly darker blue on hover */
+}
+
+/* Padding fix for clickable areas and better usability */
+button, .top-bar select, .pagination select, .pagination input[type="number"] {
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 4px;
+    border: 1px solid #7f8c8d; /* Border color matches dark mode scheme */
+}
+
+/* Status messages */
+#uploadStatus {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #ecf0f1;
+}
+
+/* Link styles for dashboard links */
+.link {
+    background-color: #34495e; /* Darker background for links */
+    border: 1px solid #7f8c8d;
+    padding: 20px;
+    text-align: center;
+    border-radius: 8px;
+    width: 30%;
+    box-shadow: 1px 1px 8px rgba(0, 0, 0, 0.05); /* Softer shadow */
+}
+
+.link a {
+    text-decoration: none;
+    font-size: 1.2rem;
+    color: #ecf0f1; /* Lighter text for link */
+}
+
+.link:hover {
+    background-color: #2c3e50; /* Dark grey hover effect */
+}
+
+/* File list section */
+#fileList {
+    margin-top: 20px;
+}
+
+/* Footer styling */
+.footer {
+    text-align: center;
+    margin-top: 50px;
+    color: #95a5a6; /* Lighter grey footer text */
+}
+
+/* General table styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #34495e; /* Darker background for table */
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #7f8c8d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #ecf0f1;
+}
+
+/* Sticky headers */
+th {
+    background-color: #2c3e50; /* Slightly lighter for table header */
+    position: sticky;
+    top: 0;
+    padding: 15px;
+    z-index: 10;
+    color: #ecf0f1;
+}
+
+/* Alternating row background color */
+tbody tr:nth-child(odd) {
+    background-color: #3c4f60; /* Darker alternate row color */
+}
+
+tbody tr:nth-child(even) {
+    background-color: #2c3e50; /* Darker background color */
+}
+
+/* Set width for item count column */
+th:first-child, td:first-child {
+    width: 50px;
+    text-align: center;
+    position: sticky;
+    left: 0;
+    background-color: #34495e; /* Slightly lighter for sticky column */
+    z-index: 11;
 }
 
 /* Pagination controls */
 .pagination {
-    text-align: right;
-    position: fixed;
-    bottom: 0;
-    width: calc(100% - 20px); /* Adjust width to account for margins */
-    background-color: white;
-    padding: 15px; /* Increased padding for more space */
-    z-index: 10;
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
     display: flex;
     justify-content: space-between;
-    align-items: center; /* Center-align items vertically */
-    border-top: 1px solid #ccc;
-    box-sizing: border-box; /* Ensures padding is within the width */
+    padding: 10px 20px;
+    background-color: #2c3e50; /* Dark background for pagination */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    border-top: 1px solid #7f8c8d;
+    align-items: center;
+    box-sizing: border-box;
+    z-index: 10;
+    color: #ecf0f1; /* Pagination text color */
 }
 
 /* Ensure enough spacing around dropdown and buttons */
 .pagination select,
 .pagination input[type="number"],
 .pagination button {
-    padding: 5px; /* Increased padding for better clickability */
-    border: 1px solid #ccc;
+    padding: 5px;
+    border: 1px solid #7f8c8d;
     border-radius: 4px;
-    margin-left: 5px; /* Ensure space between buttons */
+    margin-left: 5px;
 }
 
-/* Adjust input size */
 .pagination input[type="number"] {
-    width: 50px;
+    width: 60px;
     text-align: center;
 }
 
-/* Table styling */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    table-layout: fixed;
-}
-
-th, td {
-    padding: 10px;
-    text-align: left;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    border: 1px solid black;
-}
-
-/* Sticky headers */
-th {
-    position: sticky;
-    top: 0; /* Sticks to the top when scrolling */
-    background-color: #e0e0e0;
-    z-index: 10; /* Ensure header is on top of table rows */
-}
-
-/* Set width for the item count column */
-th:first-child, td:first-child {
-    width: 50px;
-    text-align: center;
-    position: sticky;
-    left: 0;
-    background-color: #f2f2f2;
-    z-index: 11; /* Ensure first column is above header cells */
-}
-
-/* Alternating row background color */
-tbody tr:nth-child(odd) {
-    background-color: #f2f2f2;
-}
-
-tbody tr:nth-child(even) {
-    background-color: #ffffff;
-}
-
-/* Select dropdown width adjustment */
-select {
-    width: auto; /* Fit content instead of taking up full width */
-    max-width: 150px; /* Set a max width for consistency */
+/* Fix for right-aligned items overflow */
+.pagination .right-controls {
+    margin-right: 20px;
 }

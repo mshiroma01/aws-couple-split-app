@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Couple Split - Review Transactions</title>
+    <!-- Link to the external CSS file -->
+    <link rel="stylesheet" href="PRESIGNED URL">
+</head>
+<body>
+    <div class="top-bar">
+        <h1>Review Transactions</h1>
+        <button class="home-button" onclick="goToDashboard()">Home</button>
+    </div>
+
+    <!-- Controls bar for selecting transaction status, fetch, and date -->
+    <div class="control-bar">
+        <div class="review-actions">
+            <label for="statusSelect">Transaction Status: </label>
+            <select id="statusSelect" onchange="toggleFetchButton()">
+                <option value="" disabled selected>-- Select Status --</option>
+                <option value="pending">Pending</option>
+                <option value="reviewed">Reviewed</option>
+            </select>
+
+            <button id="fetchButton" onclick="fetchTransactions()" disabled>Fetch Transactions</button>
+            <button onclick="submitChanges()">Submit Changes</button>
+
+            <div class="date-range">
+                <label for="startDate">Start Date: </label>
+                <input type="date" id="startDate" />
+                <label for="endDate">End Date: </label>
+                <input type="date" id="endDate" />
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="tablesContainer" class="table-container">
+            <!-- Table will be dynamically populated here -->
+        </div>
+
+        <div class="pagination" id="paginationControls">
+            <div>
+                <label for="itemsPerPageSelect">Items per page:</label>
+                <select id="itemsPerPageSelect" onchange="changeItemsPerPage()">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="all">All</option> <!-- Added option for displaying all items -->
+                    <option value="custom">Custom</option>
+                </select>
+                <input type="number" id="customItemsPerPage" style="display:none;" onchange="changeItemsPerPage()" placeholder="Custom" min="1">
+            </div>
+
+            <div>
+                <span id="itemRange">1-10 of 100 items</span>
+                <button onclick="goToFirstPage()" id="firstPageButton" class="pagination-button" disabled>&laquo;</button>
+                <button onclick="goToPreviousPage()" id="prevPageButton" class="pagination-button" disabled>&lt;</button>
+                <input type="number" id="currentPageInput" value="1" min="1" onchange="goToPage(this.value)">
+                <span id="totalPages">of 10</span>
+                <button onclick="goToNextPage()" id="nextPageButton" class="pagination-button">&gt;</button>
+                <button onclick="goToLastPage()" id="lastPageButton" class="pagination-button">&raquo;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link to external JavaScript file -->
+    <script src="PRESIGNED URL"></script>
+
+</body>
+</html>

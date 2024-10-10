@@ -166,6 +166,32 @@ Resources:
             Auth:
               AuthorizationType: AWS_IAM
 
+# New Lambda Function to List Old CSV Files for a User
+  fetchOldCSVsLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/fetch_old_csvs/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.11
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ExistingHashTable
+        - Statement:
+            Effect: Allow
+            Action:
+              - s3:ListBucket
+              - s3:GetObject
+            Resource:
+              - arn:aws:s3:::couple-split-app-project
+              - arn:aws:s3:::couple-split-app-project/old_csv/*
+      Events:
+        ListCSVsApi:
+          Type: Api
+          Properties:
+            Path: /fetch-old-csvs
+            Method: get
+            Auth:
+              AuthorizationType: AWS_IAM
 # Uncommented DynamoDB Table Resources (they already exist, so commented out)
 #
   TransactionSplitTable:
@@ -234,6 +260,10 @@ Outputs:
   ProcessCsvUploadApiEndpoint:
     Description: API Gateway endpoint URL for processing CSV uploads
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/upload-csv"
+
+  FetchOldCSVsApiEndpoint:
+    Description: API Gateway endpoint URL for listing old CSVs
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/fetch-old-csvs"
 
   Bucket:
     Description: S3 Bucket

@@ -25,9 +25,19 @@
         <!-- Section for Viewing Previously Uploaded CSV -->
         <div class="section">
             <h2>Previously Uploaded CSVs</h2>
-            <div id="fileList">
-                <!-- List of files will be dynamically loaded here -->
-            </div>
+            <table id="fileTable">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>Mapping Config</th>
+                        <th>Date Added</th>
+                        <th>Download</th>
+                    </tr>
+                </thead>
+                <tbody id="fileList">
+                    <!-- Files will be dynamically loaded here -->
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -86,21 +96,40 @@
             reader.readAsText(file);  // Read the file content (adjust as needed)
         }
 
-        // Function to load and display previously uploaded CSV files
+        // Function to load and display previously uploaded CSV files in a table
         async function loadUploadedFiles() {
-            const apiUrl = ''; // API endpoint for fetching file list from the old_csv bucket
+            const userId = localStorage.getItem('userId');
+            if (!userId) {
+                alert("User ID is not set.");
+                return;
+            }
+
+            const apiUrl = `PRESIGNED?user_id=${userId}`;
 
             try {
                 const response = await fetch(apiUrl);
                 const files = await response.json();
 
+                console.log("Fetched files:", files);  // Add a log to check the response
+
                 const fileList = document.getElementById('fileList');
-                fileList.innerHTML = ''; // Clear the file list
+                fileList.innerHTML = ''; // Clear the table rows
+
+                if (files.length === 0) {
+                    const emptyRow = document.createElement('tr');
+                    emptyRow.innerHTML = `<td colspan="4">No old CSV files found.</td>`;
+                    fileList.appendChild(emptyRow);
+                }
 
                 files.forEach(file => {
-                    const fileItem = document.createElement('div');
-                    fileItem.textContent = file;
-                    fileList.appendChild(fileItem);
+                    const fileRow = document.createElement('tr');
+                    fileRow.innerHTML = `
+                        <td>${file.file_name}</td>
+                        <td>${file.mapping_config}</td>
+                        <td>${file.date_added}</td>
+                        <td><a href="${file.download_url}" download>Download CSV</a></td>
+                    `;
+                    fileList.appendChild(fileRow);
                 });
             } catch (error) {
                 console.error("Error loading file list:", error);

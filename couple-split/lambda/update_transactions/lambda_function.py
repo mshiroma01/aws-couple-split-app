@@ -77,7 +77,7 @@ def lambda_handler(event, context):
 
                 # Calculate 'after_split_amount'
                 amount = decimal_to_float(update['amount'])  # Ensure the amount is also a float
-                after_split_amount = amount * split_percent
+                after_split_amount = amount * (split_percent/100)
 
                 logger.info(f"Category {category}: need={need}, split_percent={split_percent}, after_split_amount={after_split_amount}")
 

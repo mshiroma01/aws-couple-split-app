@@ -11,6 +11,13 @@ mapping_configs = {
         'memo': 'Memo',
         'date_format': '%m/%d/%Y'
     },
+    'amex_credit': {
+        'name': 'amex_credit',
+        'transaction_date': 'Date',
+        'description': 'Description',
+        'amount': 'Amount',
+        'date_format': '%m/%d/%Y'
+    },
     'discover_credit': {
         'name': 'discover_credit',
         'transaction_date': 'Trans. Date',

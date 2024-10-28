@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Split Table - Couple Split App</title>
     <!-- Link to the external CSS file -->
-    <link rel="stylesheet" href="https://couple-split-app-project.s3.amazonaws.com/static-site/styles.css">
+    <link rel="stylesheet" href="PRESIGNED">
 </head>
 <body>
 
@@ -38,35 +38,125 @@
     <script>
         const userId = localStorage.getItem('userId');  // Assume the user ID is stored in localStorage
 
-        // Function to fetch the table data
-        async function loadSplitTable() {
-            const apiUrl = `https://your-api-gateway-url/fetch-split-table?user_id=${userId}`;
+        let initialData = []; // Store the initial data for comparison
 
+        // Function to load the table and set the initial data for comparison
+        async function loadSplitTable() {
+            if (!userId) {
+                console.error("User ID is not set in localStorage.");
+                return;
+            }
+
+            const apiUrl = `PRESIGNED?userid=${userId}`;
+            
             try {
                 const response = await fetch(apiUrl);
-                const data = await response.json();
-                const tbody = document.querySelector("#splitTable tbody");
-                tbody.innerHTML = '';
+                const splitTableData = await response.json();
 
-                data.forEach(row => {
-                    const tr = document.createElement("tr");
-                    tr.innerHTML = `
-                        <td><input class="form-input" type="text" value="${row.category}" readonly></td>
+                console.log("Received data:", splitTableData);  // Add this log to check the response structure
+
+                if (!Array.isArray(splitTableData)) {
+                    console.error("Expected an array, but received:", splitTableData);
+                    return;
+                }
+
+                const splitTable = document.getElementById('splitTable');
+                const tbody = splitTable.querySelector("tbody");
+                tbody.innerHTML = ''; // Clear current table rows
+
+                // Populate table with data
+                splitTableData.forEach(item => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td><input type="text" value="${item.category}" readonly></td>
                         <td>
-                            <select class="form-input" value="${row.need}">
-                                <option value="true" ${row.need ? "selected" : ""}>True</option>
-                                <option value="false" ${!row.need ? "selected" : ""}>False</option>
+                            <select>
+                                <option value="true" ${item.need ? 'selected' : ''}>True</option>
+                                <option value="false" ${!item.need ? 'selected' : ''}>False</option>
                             </select>
                         </td>
-                        <td><input class="form-input" type="number" value="${row.split_percent}"></td>
-                        <td><button class="submit-button" onclick="deleteRow('${row.category}')">Delete</button></td>
+                        <td><input type="number" value="${item.split_percent}"></td>
+                        <td><button class="submit-button" onclick="deleteRow('${item.category}')">Delete</button></td>
                     `;
-                    tbody.appendChild(tr);
                 });
+
+                // Store the initial data for comparison
+                initialData = splitTableData.map(item => ({
+                    category: item.category,
+                    need: item.need,
+                    split_percent: item.split_percent
+                }));
+
             } catch (error) {
                 console.error("Error loading split table:", error);
             }
         }
+
+        // Function to save changes
+        async function saveChanges() {
+            const rows = document.querySelectorAll("#splitTable tbody tr");
+            const apiUrl = 'PRESIGNED';
+
+            // Create an array to hold the changes
+            const changes = [];
+
+            rows.forEach((row, index) => {
+                const category = row.children[0].querySelector("input").value;
+                const need = row.children[1].querySelector("select").value === "true";
+                const splitPercent = parseInt(row.children[2].querySelector("input").value);
+
+                // Check if the row has corresponding initial data for comparison
+                const initialRow = initialData[index];
+
+                if (initialRow) {
+                    // Compare with initial data to determine if the row has changed
+                    if (category !== initialRow.category || need !== initialRow.need || splitPercent !== initialRow.split_percent) {
+                        const action = row.children[0].querySelector("input").readOnly ? "update" : "add";
+                        changes.push({
+                            userid: userId,
+                            category: category,
+                            need: need,
+                            split_percent: splitPercent,
+                            action: action
+                        });
+                    }
+                } else {
+                    // If there's no initial data, it means this is a new row
+                    changes.push({
+                        userid: userId,
+                        category: category,
+                        need: need,
+                        split_percent: splitPercent,
+                        action: "add"
+                    });
+                }
+            });
+
+            if (changes.length > 0) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ changes })  // Send only the changed rows
+                    });
+
+                    if (!response.ok) {
+                        console.error("Failed to save changes:", await response.text());
+                    } else {
+                        console.log("Changes saved successfully!");
+                    }
+                } catch (error) {
+                    console.error("Error saving changes:", error);
+                }
+
+                loadSplitTable();  // Refresh the table after saving
+            } else {
+                console.log("No changes detected.");
+            }
+        }
+
 
         // Function to add a new row
         function addRow() {
@@ -86,44 +176,9 @@
             tbody.appendChild(tr);
         }
 
-        // Function to save changes (add/update/delete)
-        async function saveChanges() {
-            const rows = document.querySelectorAll("#splitTable tbody tr");
-            const apiUrl = 'https://your-api-gateway-url/update-split-table';
-
-            rows.forEach(async (row) => {
-                const category = row.children[0].querySelector("input").value;
-                const need = row.children[1].querySelector("select").value === "true";
-                const splitPercent = parseInt(row.children[2].querySelector("input").value);
-                const action = row.children[0].querySelector("input").readOnly ? "update" : "add";
-
-                const payload = {
-                    userid: userId,
-                    category: category,
-                    need: need,
-                    split_percent: splitPercent,
-                    action: action
-                };
-
-                try {
-                    await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(payload)
-                    });
-                } catch (error) {
-                    console.error("Error saving changes:", error);
-                }
-            });
-
-            loadSplitTable();  // Refresh the table after saving
-        }
-
         // Function to delete a row
         async function deleteRow(category) {
-            const apiUrl = 'https://your-api-gateway-url/update-split-table';
+            const apiUrl = 'PRESIGNED';
             const payload = {
                 userid: userId,
                 category: category,
@@ -146,7 +201,7 @@
 
         // Temporary function to navigate to the dashboard
         function goToDashboard() {
-            window.location.href = 'https://couple-split-app-project.s3.amazonaws.com/static-site/dashboard.html';
+            window.location.href = 'PRESIGNED'; 
         }
 
         // On page load, fetch the table data

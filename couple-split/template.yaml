@@ -35,24 +35,64 @@ Resources:
         IndexDocument: index.html
         ErrorDocument: index.html
     AccessControl: Private
+
+    # Allow CloudFront Origin Access Identity access via a Bucket Policy
     BucketPolicy:
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Sid: "DenyPublicAccess"
-            Effect: Deny
-            Principal: "*"
-            Action: "s3:GetObject"
-            Resource: "arn:aws:s3:::couple-split-app-project/*"
-            Condition:
-              Bool:
-                "aws:SecureTransport": "false"
-          - Sid: "AllowPersonalAccess"
-            Effect: Allow
-            Principal:
-              AWS: "arn:aws:iam::<your-aws-account-id>:root"
-            Action: "s3:GetObject"
-            Resource: "arn:aws:s3:::couple-split-app-project/*"
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref Bucket  # Reference to your S3 bucket
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Sid: DenyInsecureAccess
+              Effect: Deny
+              Principal: "*"
+              Action: "s3:GetObject"
+              Resource: !Sub "arn:aws:s3:::${Bucket}/*"
+              Condition:
+                Bool:
+                  "aws:SecureTransport": "false"
+            - Sid: AllowCloudFrontAccess
+              Effect: Allow
+              Principal:
+                CanonicalUser: !GetAtt CloudFrontOriginAccessIdentity.S3CanonicalUserId  # Grant access to CloudFront OAI
+              Action: "s3:GetObject"
+              Resource: !Sub "arn:aws:s3:::${Bucket}/*"
+
+
+  CloudFrontOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: "OAI for Couple-Split CloudFront"
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt Bucket.RegionalDomainName  # Using RegionalDomainName for private S3
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOriginAccessIdentity}"
+        Enabled: true
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: 
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+        DefaultRootObject: index.html
+        PriceClass: PriceClass_100
 
   CSVConverterLambda:
     Type: AWS::Serverless::Function
@@ -192,6 +232,44 @@ Resources:
             Method: get
             Auth:
               AuthorizationType: AWS_IAM
+  
+  # Lambda function to fetch SplitTable for a given user_id
+  FetchSplitTableLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/fetch_split_table/  # Update with your actual Lambda code path
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.11
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref ExistingSplitTable
+      Events:
+        FetchSplitTableApi:
+          Type: Api
+          Properties:
+            Path: /fetch-split-table
+            Method: get
+            Auth:
+              AuthorizationType: NONE # Update this with AWS_IAM if you need authenticated access
+
+  # Lambda function to update the SplitTable for a given user_id
+  UpdateSplitTableLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/update_split_table/  # Update with your actual Lambda code path
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.11
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ExistingSplitTable
+      Events:
+        UpdateSplitTableApi:
+          Type: Api
+          Properties:
+            Path: /update-split-table
+            Method: post
+            Auth:
+              AuthorizationType: NONE # Update this with AWS_IAM if you need authenticated access
 # Uncommented DynamoDB Table Resources (they already exist, so commented out)
 #
   TransactionSplitTable:
@@ -265,9 +343,21 @@ Outputs:
     Description: API Gateway endpoint URL for listing old CSVs
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/fetch-old-csvs"
 
+  FetchSplitTableApiEndpoint:
+    Description: API Gateway endpoint URL for fetching the SplitTable
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/fetch-split-table"
+
+  UpdateSplitTableApiEndpoint:
+    Description: API Gateway endpoint URL for updating the SplitTable
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/update-split-table"
+
   Bucket:
     Description: S3 Bucket
     Value: !Ref Bucket
+
+  WebsiteUrl:
+    Description: "CloudFront URL for accessing the website"
+    Value: !GetAtt CloudFrontDistribution.DomainName
 
   TransactionSplitTable:
     Description: Name of the DynamoDB TransactionSplitTable

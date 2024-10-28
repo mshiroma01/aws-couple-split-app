@@ -52,6 +52,8 @@ def update_dynamodb_from_csv(df, mapping_config, file_name):
                         item[key] = convert_date_format(str(row[value]), date_format)
                     else:
                         item[key] = str(row[value])
+                elif mapping_config.get('name') == 'amex_credit' and key == 'amount':
+                    item['amount'] = Decimal(row[value]).quantize(Decimal('0.01')) * Decimal('-1')
                 elif key not in ['name', 'debit', 'credit', 'reference_number', 'payee']:
                     item[key] = str(row[value]) if row[value] is not None else None
 

@@ -124,7 +124,6 @@ async function fetchCategories() {
 
 // Render tables with category selection dropdown for missing categories
 async function renderTables(groupedTransactions) {
-    // Fetch the categories and ensure it's an array
     splitCategories = await fetchCategories();
     if (!Array.isArray(splitCategories)) {
         console.error('splitCategories is not an array:', splitCategories);
@@ -153,7 +152,7 @@ async function renderTables(groupedTransactions) {
                     <th>Price</th>
                     <th>After Split Amount</th> 
                     <th>Date</th>
-                    <th>Category</th> <!-- New Category Column -->
+                    <th>Category</th>
                     <th>Split</th>
                 </tr>
             </thead>
@@ -162,12 +161,10 @@ async function renderTables(groupedTransactions) {
         `;
         const tableBody = table.querySelector('tbody');
 
-        // Determine the start and end indexes for pagination
         const startIndex = (currentPage - 1) * transactionsPerPage;
         const endIndex = startIndex + transactionsPerPage;
         const pagedTransactions = groupedTransactions[mappingConfigName].slice(startIndex, endIndex);
 
-        // Populate table with paged transactions and add item count
         pagedTransactions.forEach((transaction, index) => {
             const afterSplitAmount = (transaction.after_split_amount !== null && transaction.after_split_amount !== undefined) 
                 ? `$${transaction.after_split_amount.toFixed(2)}` 
@@ -175,39 +172,50 @@ async function renderTables(groupedTransactions) {
 
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${startIndex + index + 1}</td> <!-- Item count column -->
+                <td>${startIndex + index + 1}</td>
                 <td>${transaction.hash}</td>
                 <td>${transaction.description}</td>
                 <td>$${transaction.amount}</td>
                 <td>${afterSplitAmount}</td>
                 <td>${transaction.transaction_date}</td>
-                <td id="category-cell-${transaction.hash}"></td> <!-- Placeholder for category -->
+                <td id="category-cell-${transaction.hash}"></td>
                 <td>
                     <select id="split-${transaction.hash}">
-                        <option value="" disabled selected>-- Select --</option> <!-- Default option -->
+                        <option value="" disabled selected>-- Select --</option>
                         <option value="yes" ${transaction.split === true ? "selected" : ""}>Yes</option>
                         <option value="no" ${transaction.split === false ? "selected" : ""}>No</option>
                     </select>
                 </td>
             `;
 
-            // Category selection
             const categoryCell = row.querySelector(`#category-cell-${transaction.hash}`);
-            if (!transaction.category) {
-                const categorySelect = document.createElement('select');
-                categorySelect.id = `category-${transaction.hash}`;
-                categorySelect.innerHTML = '<option value="" disabled selected>-- Select Category --</option>';
-                splitCategories.forEach(category => {
-                    const option = document.createElement('option');
-                    option.value = category.category;
-                    option.textContent = category.category;
-                    categorySelect.appendChild(option);
-                });
-                categoryCell.appendChild(categorySelect);
-            } else {
-                categoryCell.textContent = transaction.category; // If a category exists, show it as text
-            }
+            const categorySelect = document.createElement('select');
+            categorySelect.id = `category-${transaction.hash}`;
+            categorySelect.innerHTML = '<option value="" disabled selected>-- Select Category --</option>';
 
+            splitCategories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.category;
+                option.textContent = category.category;
+                categorySelect.appendChild(option);
+            });
+
+            // Add event listener to check if selected category has split_percent of 0
+            categorySelect.addEventListener('change', function() {
+                const selectedCategory = splitCategories.find(cat => cat.category === categorySelect.value);
+                const splitSelect = document.getElementById(`split-${transaction.hash}`);
+            
+
+                // Check split_percent and set split to "no" if it's 0
+                if (selectedCategory && selectedCategory.split_percent === 0) {
+                    splitSelect.value = "no";
+                    splitSelect.disabled = true; // Disable further editing if needed
+                } else {
+                    splitSelect.disabled = false; // Re-enable if other category is selected
+                }
+            });
+
+            categoryCell.appendChild(categorySelect);
             tableBody.appendChild(row);
         });
 
@@ -323,8 +331,7 @@ async function submitChanges() {
         const transaction = allTransactions.find(t => t.hash === transactionId);
         const amount = transaction ? transaction.amount : null;  // Get the transaction amount
 
-        // Get UserID from a global variable, hardcoded value, or another source
-        const userid = '123456789'; // Hardcoded for now; replace with actual logic
+        const userid = localStorage.getItem('userId');  // Get User ID from localStorage
 
         // Only push updates if a valid selection was made for split or category
         if ((splitValue === 'yes' || splitValue === 'no') || selectedCategory) {
@@ -344,15 +351,11 @@ async function submitChanges() {
         return;
     }
 
-    // Get Cognito access token
-    const token = localStorage.getItem('accessToken');  // Ensure the token is stored here after login
-
     // Send the updated transactions to the backend API
     try {
         const response = await fetch(apiUrlUpdate, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,  // Add Cognito token here
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify(updates)
@@ -360,6 +363,8 @@ async function submitChanges() {
 
         if (response.ok) {
             alert('Transactions updated successfully!');
+            await fetchTransactions(); // Re-fetch transactions to get the latest data from the backend
+            renderTables(groupedTransactions); // Re-render the tables
         } else {
             const errorText = await response.text();
             alert(`Error updating transactions: ${errorText}`);
@@ -369,6 +374,7 @@ async function submitChanges() {
         alert('Error submitting changes. Please try again later.');
     }
 }
+
 
 function goToDashboard() {
     window.location.href = 'PRESIGNED URL'; 

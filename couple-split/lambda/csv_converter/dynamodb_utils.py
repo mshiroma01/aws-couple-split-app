@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import boto3
 from decimal import Decimal
 from split import split_percent, get_split_data
@@ -52,12 +52,14 @@ def update_dynamodb_from_csv(df, mapping_config, file_name):
                         item[key] = convert_date_format(str(row[value]), date_format)
                     else:
                         item[key] = str(row[value])
-                elif mapping_config.get('name') == 'amex_credit' and key == 'amount':
+                elif mapping_config.get('name') in ['amex_credit', 'discover_credit', 'sams_credit'] and key == 'amount':
                     item['amount'] = Decimal(row[value]).quantize(Decimal('0.01')) * Decimal('-1')
                 elif key not in ['name', 'debit', 'credit', 'reference_number', 'payee']:
                     item[key] = str(row[value]) if row[value] is not None else None
 
         item['mapping_config_name'] = mapping_config['name']
+        
+        item['date_csv_added'] = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
         if 'amount' in item:
             item['amount'] = Decimal(str(item['amount']).replace(',', '')).quantize(Decimal('0.01'))

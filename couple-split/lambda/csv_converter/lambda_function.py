@@ -33,23 +33,34 @@ def lambda_handler(event, context):
                 df = pd.read_csv(io.BytesIO(file_content), skiprows=8, header=None, names=header)
             else:
                 df = pd.read_csv(io.BytesIO(file_content))
-            
-            mapping_config = None
+                header = df.columns.tolist()  # Update header after reading the CSV
+
+            # Initialize variables to keep track of the best match
+            best_match = None
+            max_matched_columns = 0
+
             for format_name, config in mapping_configs.items():
-                if all(col in header for key, col in config.items() if key not in ['name', 'date_format']):
-                    mapping_config = config
-                    break
-                    
-            if mapping_config is not None:
+                # Get the required columns for this configuration
+                required_cols = set(col for key, col in config.items() if key not in ['name', 'date_format'])
+                # Check if all required columns are present in the header
+                if required_cols.issubset(header):
+                    matched_columns = len(required_cols)
+                    # Prioritize configurations with more matched columns
+                    if matched_columns > max_matched_columns:
+                        best_match = config
+                        max_matched_columns = matched_columns
+
+            # Assign the best matching configuration
+            if best_match:
+                mapping_config = best_match
                 update_dynamodb_from_csv(df, mapping_config, key)
                 new_key = rename_file(key, mapping_config, hash)
                 s3.copy_object(Bucket=bucket, Key=f'old_csv/{new_key}', CopySource=f'{bucket}/{key}')
                 s3.delete_object(Bucket=bucket, Key=key)
+                # Store the hash and date in DynamoDB
+                store_hash_in_dynamodb('HashTable', hash, key, mapping_config['name'])
             else:
                 print(f'No matching mapping configuration found for CSV file: {key}')
-
-            # Store the hash and date in DynamoDB
-            store_hash_in_dynamodb('HashTable', hash, key, mapping_config['name'])
         else:
             print(f"File with hash '{hash}' has already been processed. Skipping further processing.")
             s3.delete_object(Bucket=bucket, Key=key)

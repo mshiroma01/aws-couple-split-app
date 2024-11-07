@@ -23,7 +23,16 @@ def split_percent(item, table_data):
                     item['split_percent'] = row['split_percent']
                     
                     # Calculate amount after a split
-                    item['after_split_amount'] = item['amount'] - (item['amount'] * (item['split_percent']/100))
+                    if item['split_percent'] == 0:
+                        item['after_split_amount'] = item['amount']
+                        item['partner_split_amount'] = 0
+                    elif item['split_percent'] == 100:
+                        item['after_split_amount'] = 0
+                        item['partner_split_amount'] = item['amount']
+                    else:
+                        item['after_split_amount'] = item['amount'] * (item['split_percent'] / 100)
+                        item['partner_split_amount'] = item['amount'] * ((100 - item['split_percent']) / 100)
+
     else:
         # Dont store the other values in the item to save space in table
         item['split_percent'] = 0

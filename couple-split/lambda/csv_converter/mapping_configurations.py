@@ -18,6 +18,14 @@ mapping_configs = {
         'amount': 'Amount',
         'date_format': '%m/%d/%Y'
     },
+    'sams_credit': {
+        'name': 'sams_credit',
+        'transaction_date': 'Date',
+        'reference': 'Reference',
+        'description': 'Description',
+        'amount': 'Amount',
+        'date_format': '%m/%d/%Y'
+    },
     'discover_credit': {
         'name': 'discover_credit',
         'transaction_date': 'Trans. Date',

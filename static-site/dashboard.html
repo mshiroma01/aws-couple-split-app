@@ -2,35 +2,96 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Couple Split - Dashboard</title>
-    <link rel="stylesheet" href="PRESIGNED URL">
+    <link rel="stylesheet" href="https://ID.cloudfront.net/static-site/styles.css">
+    <style>
+        /* Styles for sortable table */
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        th.sortable:after {
+            content: '\25B2'; /* Up arrow */
+            float: right;
+            margin-left: 5px;
+        }
+        th.sortable.desc:after {
+            content: '\25BC'; /* Down arrow */
+        }
+    </style>
 </head>
 <body>
+    <!-- Top Bar with Date Selectors -->
     <div class="top-bar">
         <h1>Couple Split Dashboard</h1>
-    </div>
-
-    <div class="container">
-        <div class="section">
-            <h2>Welcome to Couple Split</h2>
-            <p>Navigate to different sections of the app below:</p>
-        </div>
-        <div class="links">
-            <div class="link">
-                <a href="PRESIGNED URL">Review Transactions</a>
-            </div>
-            <div class="link">
-                <a href="PRESIGNED URL">CSV Upload</a>
-            </div>
-            <div class="link">
-                <a href="PRESIGNED URL">Manage Split Table</a>
-            </div>
+        <div class="date-selector">
+            <label for="transactionStartDate">Transaction Start Date:</label>
+            <input type="date" id="transactionStartDate">
+            <label for="transactionEndDate">Transaction End Date:</label>
+            <input type="date" id="transactionEndDate">
+            <label for="csvStartDate">CSV Start Date:</label>
+            <input type="date" id="csvStartDate">
+            <label for="csvEndDate">CSV End Date:</label>
+            <input type="date" id="csvEndDate">
+            <button onclick="fetchReport()">Generate Report</button>
         </div>
     </div>
 
-    <div class="footer">
-        <p>© 2024 Couple Split App</p>
+    <!-- Sidebar for Navigation -->
+    <div class="sidebar">
+        <h2>Menu</h2>
+        <ul>
+            <li><a href="https://ID.cloudfront.net/static-site/review-transactions.html">Review Transactions</a></li>
+            <li><a href="https://ID.cloudfront.net/static-site/upload-csv.html">CSV Upload</a></li>
+            <li><a href="https://ID.cloudfront.net/static-site/split-table.html">Manage Split Table</a></li>
+        </ul>
     </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <div class="container">
+            <!-- Summary Section -->
+            <div class="section summary">
+                <h2>Summary</h2>
+                <p>Total amount owed by Partner: $<span id="partnerOwes">0.00</span></p>
+                <p>Total amount owed by You: $<span id="youOwe">0.00</span></p>
+            </div>
+
+            <!-- Pie Chart for Expense Categories -->
+            <div class="section">
+                <h2>Expense Categories</h2>
+                <canvas id="expensePieChart"></canvas>
+            </div>
+
+            <!-- Bar Chart for Needs vs Wants -->
+            <div class="section">
+                <h2>Needs vs Wants Spending</h2>
+                <canvas id="needsWantsBarChart"></canvas>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="section">
+                <h2>All Transactions</h2>
+                <table id="transactionsTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-column="transaction_date">Date</th>
+                            <th class="sortable" data-column="description">Description</th>
+                            <th class="sortable" data-column="category">Category</th>
+                            <th class="sortable" data-column="amount">Amount</th>
+                            <th class="sortable" data-column="split">Split</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link to Chart.js library and external JavaScript file -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://ID.cloudfront.net/static-site/dashboard.js"></script>
 </body>
 </html>

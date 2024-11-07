@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Category Details</title>
+    <link rel="stylesheet" href="https://ID.cloudfront.net/static-site/styles.css">
+    <style>
+        /* Styles for scrollable bar chart and sortable table */
+        .chart-container {
+            position: relative;
+            height: 400px; /* Adjust the height as needed */
+            overflow-y: auto;
+        }
+        th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        th.sortable:after {
+            content: '\25B2'; /* Up arrow */
+            float: right;
+            margin-left: 5px;
+        }
+        th.sortable.desc:after {
+            content: '\25BC'; /* Down arrow */
+        }
+        /* Ensure the canvas fills the container */
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>Category Details: <span id="categoryName"></span></h1>
+    <div class="container">
+        <!-- Bar Chart for Vendors -->
+        <div class="section">
+            <h2>Vendor Breakdown</h2>
+            <div class="chart-container">
+                <canvas id="vendorBarChart"></canvas>
+            </div>
+        </div>
+        <!-- Table of Transactions -->
+        <div class="section">
+            <h2>Transactions</h2>
+            <table id="transactionsTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-column="transaction_date">Date</th>
+                        <th class="sortable" data-column="description">Description</th>
+                        <th class="sortable" data-column="amount">Amount</th>
+                        <th>Split</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows will be added dynamically -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Include Chart.js, ChartDataLabels plugin, and your JavaScript file -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Include the ChartDataLabels plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://ID.cloudfront.net/static-site/category-details.js"></script>
+</body>
+</html>

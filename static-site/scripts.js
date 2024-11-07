@@ -32,7 +32,7 @@ async function fetchTransactions() {
 
     if (!userId) {
         alert("User ID not found. Please log in first.");
-        window.location.href = 'https://d2efwp0nckcwko.cloudfront.net/static-site/index.html';
+        window.location.href = 'https://ID.cloudfront.net/static-site/index.html';
         return;
     }
 
@@ -373,5 +373,5 @@ async function submitChanges() {
 }
 
 function goToDashboard() {
-    window.location.href = 'https://d2efwp0nckcwko.cloudfront.net/static-site/dashboard.html'; 
+    window.location.href = 'https://ID.cloudfront.net/static-site/dashboard.html'; 
 }

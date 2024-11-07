@@ -1,6 +1,6 @@
 // Hardcoded API Gateway URLs for fetch and update operations
-const apiUrlFetch = 'APIKEY';
-const apiUrlUpdate = 'APIKEY';
+const apiUrlFetch = 'https://ID.execute-api.us-east-1.amazonaws.com/Prod/fetch-transactions';
+const apiUrlUpdate = 'https://ID.execute-api.us-east-1.amazonaws.com/Prod/update-transactions';
 
 let transactionsPerPage = 10; // Default items per page
 let currentPage = 1;
@@ -10,7 +10,13 @@ let totalPages = 0;
 let groupedTransactions = {}; // Store transactions grouped by mapping_config_name
 let allTransactions = []; // Store all fetched transactions locally
 
-let splitCategories = {}; // Store fetched split categories locally
+let splitCategories = []; // Store fetched split categories locally
+let changedItems = {}; // Object to store changed transactions
+
+// Function to encode IDs safely
+function encodeId(id) {
+    return id.replace(/[^a-zA-Z0-9_-]/g, '_');
+}
 
 // Enable the Fetch button only when a status is selected
 function toggleFetchButton() {
@@ -26,7 +32,7 @@ async function fetchTransactions() {
 
     if (!userId) {
         alert("User ID not found. Please log in first.");
-        window.location.href = 'APIKEY'; // Redirect to login page if User ID is not found
+        window.location.href = 'https://d2efwp0nckcwko.cloudfront.net/static-site/index.html';
         return;
     }
 
@@ -40,7 +46,6 @@ async function fetchTransactions() {
     if (startDate) apiUrlFetchWithParams += `&startDate=${encodeURIComponent(startDate)}`;
     if (endDate) apiUrlFetchWithParams += `&endDate=${encodeURIComponent(endDate)}`;
 
-    // Add the actual fetch call here
     try {
         const response = await fetch(apiUrlFetchWithParams, {
             method: 'GET',
@@ -64,7 +69,7 @@ async function fetchTransactions() {
         totalItems = allTransactions.length;
 
         groupedTransactions = groupByMappingConfig(allTransactions);
-        renderTables(groupedTransactions);
+        await renderTables(groupedTransactions); // Await since renderTables is async
         renderPaginationControls();  
 
     } catch (error) {
@@ -72,8 +77,6 @@ async function fetchTransactions() {
         document.getElementById('tablesContainer').innerHTML = `<p>Error fetching transactions: ${error.message}</p>`;
     }
 }
-
-
 
 // Handle changing the number of items per page
 function changeItemsPerPage() {
@@ -101,7 +104,7 @@ function changeItemsPerPage() {
 
 // Fetch categories before rendering tables
 async function fetchCategories() {
-    const apiUrlCategories = 'APIKEY'; 
+    const apiUrlCategories = 'https://ID.execute-api.us-east-1.amazonaws.com/Prod/fetch-categories'; 
 
     try {
         const response = await fetch(`${apiUrlCategories}?userid=123456789`, {
@@ -120,7 +123,6 @@ async function fetchCategories() {
         return [];
     }
 }
-
 
 // Render tables with category selection dropdown for missing categories
 async function renderTables(groupedTransactions) {
@@ -151,7 +153,9 @@ async function renderTables(groupedTransactions) {
                     <th>Description</th> 
                     <th>Price</th>
                     <th>After Split Amount</th> 
+                    <th>Partner Split Amount</th>
                     <th>Date</th>
+                    <th>Date CSV Added</th>
                     <th>Category</th>
                     <th>Split</th>
                 </tr>
@@ -166,21 +170,28 @@ async function renderTables(groupedTransactions) {
         const pagedTransactions = groupedTransactions[mappingConfigName].slice(startIndex, endIndex);
 
         pagedTransactions.forEach((transaction, index) => {
-            const afterSplitAmount = (transaction.after_split_amount !== null && transaction.after_split_amount !== undefined) 
-                ? `$${transaction.after_split_amount.toFixed(2)}` 
+            const afterSplitAmount = transaction.after_split_amount !== null && transaction.after_split_amount !== undefined
+                ? `$${transaction.after_split_amount.toFixed(2)}`
                 : '';
+            const partnerAfterSplitAmount = transaction.partner_after_split_amount !== null && transaction.partner_after_split_amount !== undefined
+                ? `$${transaction.partner_after_split_amount.toFixed(2)}`
+                : '';
+
+            const safeHash = encodeId(transaction.hash);
 
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${startIndex + index + 1}</td>
-                <td>${transaction.hash}</td>
+                <td>${transaction.hash.substring(0, 16)}...</td>
                 <td>${transaction.description}</td>
                 <td>$${transaction.amount}</td>
                 <td>${afterSplitAmount}</td>
+                <td>${partnerAfterSplitAmount}</td>
                 <td>${transaction.transaction_date}</td>
-                <td id="category-cell-${transaction.hash}"></td>
+                <td>${transaction.date_csv_added}</td> 
+                <td id="category-cell-${safeHash}"></td>
                 <td>
-                    <select id="split-${transaction.hash}">
+                    <select id="split-${safeHash}">
                         <option value="" disabled selected>-- Select --</option>
                         <option value="yes" ${transaction.split === true ? "selected" : ""}>Yes</option>
                         <option value="no" ${transaction.split === false ? "selected" : ""}>No</option>
@@ -188,34 +199,48 @@ async function renderTables(groupedTransactions) {
                 </td>
             `;
 
-            const categoryCell = row.querySelector(`#category-cell-${transaction.hash}`);
+            const categoryCell = row.querySelector(`#category-cell-${safeHash}`);
             const categorySelect = document.createElement('select');
-            categorySelect.id = `category-${transaction.hash}`;
+            categorySelect.id = `category-${safeHash}`;
             categorySelect.innerHTML = '<option value="" disabled selected>-- Select Category --</option>';
 
             splitCategories.forEach(category => {
                 const option = document.createElement('option');
                 option.value = category.category;
                 option.textContent = category.category;
+                if (transaction.category === category.category) {
+                    option.selected = true;
+                }
                 categorySelect.appendChild(option);
             });
 
-            // Add event listener to check if selected category has split_percent of 0
-            categorySelect.addEventListener('change', function() {
-                const selectedCategory = splitCategories.find(cat => cat.category === categorySelect.value);
-                const splitSelect = document.getElementById(`split-${transaction.hash}`);
-            
+            categoryCell.appendChild(categorySelect);
 
-                // Check split_percent and set split to "no" if it's 0
+            // Add event listeners to track changes
+            const splitSelect = row.querySelector(`#split-${safeHash}`);
+            splitSelect.addEventListener('change', function() {
+                if (!changedItems[transaction.hash]) {
+                    changedItems[transaction.hash] = {};
+                }
+                changedItems[transaction.hash].split = splitSelect.value;
+            });
+
+            categorySelect.addEventListener('change', function() {
+                if (!changedItems[transaction.hash]) {
+                    changedItems[transaction.hash] = {};
+                }
+                changedItems[transaction.hash].category = categorySelect.value;
+
+                // Optionally, update the split select based on category change
+                const selectedCategory = splitCategories.find(cat => cat.category === categorySelect.value);
                 if (selectedCategory && selectedCategory.split_percent === 0) {
                     splitSelect.value = "no";
-                    splitSelect.disabled = true; // Disable further editing if needed
+                    splitSelect.disabled = true;
                 } else {
-                    splitSelect.disabled = false; // Re-enable if other category is selected
+                    splitSelect.disabled = false;
                 }
             });
 
-            categoryCell.appendChild(categorySelect);
             tableBody.appendChild(row);
         });
 
@@ -235,31 +260,6 @@ function groupByMappingConfig(transactions) {
         return group;
     }, {});
 }
-
-// Handle changing the number of items per page
-function changeItemsPerPage() {
-    const select = document.getElementById('itemsPerPageSelect');
-    const customInput = document.getElementById('customItemsPerPage');
-
-    if (select.value === 'custom') {
-        customInput.style.display = 'inline-block'; // Show custom input
-        const customValue = parseInt(customInput.value, 10);
-        if (customValue > 0) {
-            transactionsPerPage = customValue;
-        }
-    } else if (select.value === 'all') {
-        transactionsPerPage = totalItems; // Set to totalItems to show all transactions
-        customInput.style.display = 'none'; // Hide custom input
-    } else {
-        transactionsPerPage = parseInt(select.value, 10);
-        customInput.style.display = 'none'; // Hide custom input
-    }
-
-    currentPage = 1; // Reset to the first page
-    renderTables(groupedTransactions);
-    renderPaginationControls();
-}
-
 
 // Update pagination controls
 function renderPaginationControls() {
@@ -313,38 +313,34 @@ function goToPage(page) {
     }
 }
 
+// Submit only changed transactions
 async function submitChanges() {
-    const tablesContainer = document.getElementById('tablesContainer');
-    const selects = tablesContainer.querySelectorAll('select');
+    const userid = localStorage.getItem('userId');  // Get User ID from localStorage
 
     const updates = [];
 
-    selects.forEach(select => {
-        const transactionId = select.id.split('-')[1]; // Extract transaction ID from select ID
-        const splitValue = select.value; // Get the value of the split dropdown
-
-        // Get the selected category from the category dropdown if it exists
-        const categorySelect = document.getElementById(`category-${transactionId}`);
-        const selectedCategory = categorySelect ? categorySelect.value : null;
-
-        // Find the matching transaction in `allTransactions` to get the amount
+    for (const transactionId in changedItems) {
+        const changes = changedItems[transactionId];
         const transaction = allTransactions.find(t => t.hash === transactionId);
-        const amount = transaction ? transaction.amount : null;  // Get the transaction amount
+        if (!transaction) continue; // Should not happen
 
-        const userid = localStorage.getItem('userId');  // Get User ID from localStorage
+        const update = {
+            hash: transactionId,
+            userid: userid,
+            status: 'reviewed',
+            amount: transaction.amount,
+        };
 
-        // Only push updates if a valid selection was made for split or category
-        if ((splitValue === 'yes' || splitValue === 'no') || selectedCategory) {
-            updates.push({
-                hash: transactionId,
-                split: splitValue,  // This will be either 'yes' or 'no'
-                category: selectedCategory,  // Include category if updated
-                status: 'reviewed',   // Change status to reviewed
-                userid: userid,       // Pass the user ID
-                amount: amount        // Pass the transaction amount
-            });
+        if ('split' in changes) {
+            update.split = changes.split;
         }
-    });
+
+        if ('category' in changes) {
+            update.category = changes.category;
+        }
+
+        updates.push(update);
+    }
 
     if (updates.length === 0) {
         alert('No transactions were selected for update.');
@@ -363,6 +359,7 @@ async function submitChanges() {
 
         if (response.ok) {
             alert('Transactions updated successfully!');
+            changedItems = {}; // Clear changed items after successful update
             await fetchTransactions(); // Re-fetch transactions to get the latest data from the backend
             renderTables(groupedTransactions); // Re-render the tables
         } else {
@@ -375,7 +372,6 @@ async function submitChanges() {
     }
 }
 
-
 function goToDashboard() {
-    window.location.href = 'PRESIGNED URL'; 
+    window.location.href = 'https://d2efwp0nckcwko.cloudfront.net/static-site/dashboard.html'; 
 }
